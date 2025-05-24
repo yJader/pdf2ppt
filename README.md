@@ -13,5 +13,11 @@
 ## 使用
 
 ```bash
-python pdf2ppt.py -i input.pdf -o output.pptx
+python pdf2ppt.py -h # 查看更详细的帮助
+
+python pdf2ppt.py -i input.pdf -o output.pptx --dpi 800
 ```
+
+## 备注
+
+感谢gemini, 光速开发完成XD

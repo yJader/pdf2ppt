@@ -131,11 +131,9 @@ def convert_pdf_to_ppt_with_comments(
         # 3. 添加注释到幻灯片备注
         if page_num in comments_data:
             notes_slide = slide.notes_slide
-            text_frame = notes_slide.notes_text_frame
-            # 清除可能存在的默认文本
-            text_frame.clear()
-            p = text_frame.paragraphs[0]  # 获取第一个段落
-            p.text = "\n".join(comments_data[page_num])  # 将所有注释合并，用换行符分隔
+            notes_slide = slide.notes_slide
+            # 直接设置备注文本框的全部内容
+            notes_slide.notes_text_frame.text = "\n".join(comments_data[page_num])
             print(f"添加备注: {comments_data[page_num]} 到第 {page_num + 1} 页")
 
             # 如果需要将每个注释作为单独的段落：
@@ -172,7 +170,10 @@ def convert(
         ..., "-i", "--pdf-input-path", help="输入的 PDF 文件路径"
     ),
     ppt_output_path: Path = typer.Option(
-        ..., "-o", "--ppt-output-path", help="输出的 PPT 文件路径"
+        None,
+        "-o",
+        "--ppt-output-path",
+        help="输出的 PPT 文件路径(default: out/同名 PDF 文件的 .pptx)",
     ),
     output_dpi: int = typer.Option(
         600, "-d", "--dpi", help="输出图片的 DPI (dots per inch)"
@@ -190,7 +191,8 @@ def convert(
         return
 
     if ppt_output_path is None:
-        ppt_output_path = Path("output") / pdf_input_path.with_suffix(".pptx")
+        outfile_name = pdf_input_path.stem + ".pptx"
+        ppt_output_path = Path("out") / outfile_name
         print(f"输出的 PPT 文件路径未指定，使用默认路径: {ppt_output_path}")
 
     ppt_output_path.parent.mkdir(parents=True, exist_ok=True)
