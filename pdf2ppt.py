@@ -169,13 +169,13 @@ def convert_pdf_to_ppt_with_comments(
 @pdf2ppt_app.command()
 def convert(
     pdf_input_path: Path = typer.Option(
-        ..., "--pdf-input-path", help="输入的 PDF 文件路径"
+        ..., "-i", "--pdf-input-path", help="输入的 PDF 文件路径"
     ),
     ppt_output_path: Path = typer.Option(
-        ..., "--ppt-output-path", help="输出的 PPT 文件路径"
+        ..., "-o", "--ppt-output-path", help="输出的 PPT 文件路径"
     ),
     output_dpi: int = typer.Option(
-        600, "--output-dpi", help="输出图片的 DPI (dots per inch)"
+        600, "-d", "--dpi", help="输出图片的 DPI (dots per inch)"
     ),
 ):
     """
