@@ -17,3 +17,9 @@ tests/assets/
 
 # 默认输出路径
 out/
+
+# 输入路径
+in/
+
+# 临时图片路径
+temp_pdf_images/

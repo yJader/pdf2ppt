@@ -3,10 +3,15 @@ import fitz  # PyMuPDF
 from pptx import Presentation
 from pptx.util import Inches
 import os
-
+import shutil
 import typer
+from rich.progress import track
 
-pdf2ppt_app = typer.Typer()
+pdf2ppt_app = typer.Typer(name="pdf2ppt")
+
+out_dir = Path("out")
+in_dir = Path("in")
+temp_dir = Path("temp_pdf_images")
 
 
 def extract_pdf_comments_with_pages(pdf_path: Path) -> dict[int, list[str]]:
@@ -101,17 +106,16 @@ def convert_pdf_to_ppt_with_comments(
         print("警告: 找不到索引为6的空白幻灯片布局，使用第一个布局。")
         blank_slide_layout = prs.slide_layouts[0]
 
-    temp_image_dir = "temp_pdf_images"
-    if not os.path.exists(temp_image_dir):
-        os.makedirs(temp_image_dir)
+    if not temp_dir.exists():
+        os.makedirs(temp_dir)
 
-    for page_num in range(len(doc)):
+    for page_num in track(range(len(doc)), description="处理页面..."):
         page = doc.load_page(page_num)
 
         # 1. 将 PDF 页面转换为图片
         # 可以调整 dpi (dots per inch) 来控制图片质量和大小
         pix = page.get_pixmap(dpi=output_dpi, annots=False)
-        image_filename = os.path.join(temp_image_dir, f"page_{page_num + 1}.png")
+        image_filename = os.path.join(temp_dir, f"page_{page_num + 1}.png")
         pix.save(image_filename)
 
         # 2. 在 PPT 中添加新幻灯片并将图片插入
@@ -134,7 +138,7 @@ def convert_pdf_to_ppt_with_comments(
             notes_slide = slide.notes_slide
             # 直接设置备注文本框的全部内容
             notes_slide.notes_text_frame.text = "\n".join(comments_data[page_num])
-            print(f"添加备注: {comments_data[page_num]} 到第 {page_num + 1} 页")
+            # print(f"添加备注: {comments_data[page_num]} 到第 {page_num + 1} 页")
 
             # 如果需要将每个注释作为单独的段落：
             # text_frame.text = comments_data[page_num][0]
@@ -142,19 +146,17 @@ def convert_pdf_to_ppt_with_comments(
             #     p = text_frame.add_paragraph()
             #     p.text = comments_data[page_num][i]
 
-        print(f"处理完成：第 {page_num + 1} 页 / 共 {len(doc)} 页")
+        # print(f"处理完成：第 {page_num + 1} 页 / 共 {len(doc)} 页")
 
     # 清理临时图片文件
     for page_num in range(len(doc)):
-        image_filename = os.path.join(temp_image_dir, f"page_{page_num + 1}.png")
+        image_filename = os.path.join(temp_dir, f"page_{page_num + 1}.png")
         if os.path.exists(image_filename):
             os.remove(image_filename)
-    if os.path.exists(temp_image_dir) and not os.listdir(
-        temp_image_dir
-    ):  # 检查目录是否为空
-        os.rmdir(temp_image_dir)
-    elif os.path.exists(temp_image_dir):
-        print(f"警告: 临时图片目录 {temp_image_dir} 未被完全清空。")
+    if temp_dir.exists() and not os.listdir(temp_dir):  # 检查目录是否为空
+        os.rmdir(temp_dir)
+    elif os.path.exists(temp_dir):
+        print(f"警告: 临时图片目录 {temp_dir} 未被完全清空。")
 
     doc.close()
     try:
@@ -164,7 +166,9 @@ def convert_pdf_to_ppt_with_comments(
         print(f"错误：无法保存 PPT 文件 '{ppt_path}'. {e}")
 
 
-@pdf2ppt_app.command()
+@pdf2ppt_app.command(
+    "convert", help="将 PDF 文件转换为 PPT 文件，并提取注释添加到备注中。"
+)
 def convert(
     pdf_input_path: Path = typer.Option(
         ..., "-i", "--pdf-input-path", help="输入的 PDF 文件路径"
@@ -209,6 +213,14 @@ def convert(
     convert_pdf_to_ppt_with_comments(
         pdf_input_path, ppt_output_path, extracted_comments, output_dpi
     )
+
+
+@pdf2ppt_app.command("clean", help="清理临时文件和输出文件")
+def clean_out():
+    if temp_dir.exists():
+        shutil.rmtree(temp_dir)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
 
 
 if __name__ == "__main__":
