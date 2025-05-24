@@ -8,8 +8,6 @@ import typer
 
 pdf2ppt_app = typer.Typer()
 
-output_dpi = 600  # 输出图片的 DPI (dots per inch)，可以根据需要调整
-
 
 def extract_pdf_comments_with_pages(pdf_path: Path) -> dict[int, list[str]]:
     """
@@ -59,7 +57,10 @@ def extract_pdf_comments_with_pages(pdf_path: Path) -> dict[int, list[str]]:
 
 
 def convert_pdf_to_ppt_with_comments(
-    pdf_path: Path, ppt_path: Path, comments_data: dict[int, list[str]]
+    pdf_path: Path,
+    ppt_path: Path,
+    comments_data: dict[int, list[str]],
+    output_dpi: int = 600,
 ):
     """
     将 PDF 转换为 PPT，并将提取的注释添加到幻灯片备注中。
@@ -68,6 +69,7 @@ def convert_pdf_to_ppt_with_comments(
         pdf_path (Path): 输入的 PDF 文件路径。
         ppt_path (Path): 输出的 PPT 文件路径。
         comments_data (dict): 从 extract_pdf_comments_with_pages 获取的注释数据。
+        output_dpi (int): 输出图片的 DPI (dots per inch)，可以根据需要调整。
     """
     try:
         doc = fitz.open(pdf_path)
@@ -108,7 +110,7 @@ def convert_pdf_to_ppt_with_comments(
 
         # 1. 将 PDF 页面转换为图片
         # 可以调整 dpi (dots per inch) 来控制图片质量和大小
-        pix = page.get_pixmap(dpi=output_dpi)
+        pix = page.get_pixmap(dpi=output_dpi, annots=False)
         image_filename = os.path.join(temp_image_dir, f"page_{page_num + 1}.png")
         pix.save(image_filename)
 
@@ -172,6 +174,9 @@ def convert(
     ppt_output_path: Path = typer.Option(
         ..., "--ppt-output-path", help="输出的 PPT 文件路径"
     ),
+    output_dpi: int = typer.Option(
+        600, "--output-dpi", help="输出图片的 DPI (dots per inch)"
+    ),
 ):
     """
     将 PDF 文件转换为 PPT 文件，并提取注释添加到备注中。
@@ -200,7 +205,7 @@ def convert(
 
     print("正在将 PDF 转换为 PPT (带注释)...")
     convert_pdf_to_ppt_with_comments(
-        pdf_input_path, ppt_output_path, extracted_comments
+        pdf_input_path, ppt_output_path, extracted_comments, output_dpi
     )
 
 

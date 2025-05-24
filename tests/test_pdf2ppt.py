@@ -27,5 +27,6 @@ def test_convert_pdf_to_ppt_with_comments():
         Path(__file__).parent / "assets" / "test.pdf",
         Path(__file__).parent / "assets" / "test.pptx",
         comments,
+        output_dpi=100,
     )
     assert (Path(__file__).parent / "assets" / "test.pptx").exists()
